@@ -6,9 +6,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../services/chat_service.dart';
 import '../text_styles.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class ChatVideoPage extends StatefulWidget {
-  const ChatVideoPage({super.key});
+  final void Function(String) onSend;
+
+  const ChatVideoPage({
+    required this.onSend,
+    super.key,
+  });
 
   @override
   State<ChatVideoPage> createState() => _ChatVideoPageState();
@@ -22,6 +29,13 @@ class _ChatVideoPageState extends State<ChatVideoPage> {
   late VideoPlayerController _controllerVideo;
   late Future<void> _initializeVideoPlayerFuture;
 
+
+
+  SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
+
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +45,37 @@ class _ChatVideoPageState extends State<ChatVideoPage> {
     _initializeVideoPlayerFuture = _controllerVideo.initialize().then((_) {
       setState(() {});
       _controllerVideo.play();
+    });
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+
+    if (_controller.text.trim().isNotEmpty) {
+      widget.onSend(_controller.text.trim());
+      setState(() {
+        _controller.clear();
+      });
+    }
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = result.recognizedWords;
+      _controller.text = _lastWords;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),);
     });
   }
 
@@ -124,6 +169,14 @@ class _ChatVideoPageState extends State<ChatVideoPage> {
             )
     ]),
     ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF2C8955),
+        onPressed:
+        // If not yet listening for speech start, otherwise stop
+        _speechToText.isNotListening ? _startListening : _stopListening,
+        tooltip: 'Listen',
+        child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic, color: Colors.white,),
+      ),
     );
   }
 }

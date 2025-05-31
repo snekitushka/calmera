@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-String urlBase = "http://192.168.0.104:8000/api/v1/";
+String urlBase = "http://172.20.10.2:8000/api/v1/";
+//String urlBase = "http://192.168.0.104:8000/api/v1/";
 
 class UserService {
   static Future<bool> loginUser(String name, String password) async {

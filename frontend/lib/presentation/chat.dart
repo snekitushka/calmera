@@ -6,6 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/chat_service.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -20,12 +22,44 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   bool isTyping = false;
 
+  SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
+
 
   @override
   void initState() {
     super.initState();
     _loadConversation();
+    _initSpeech();
   }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = result.recognizedWords;
+      _controller.text = _lastWords;
+      _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),);
+    });
+  }
+
+
+
 
   @override
   void dispose() {
@@ -133,11 +167,28 @@ class _ChatPageState extends State<ChatPage> {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  child: ChatInputField(
-                    controller: _controller,
-                    onSend: _sendMessage,
+                  child: Container(
+                    child: Row(
+                          children: [
+                            Expanded(
+                              child: ChatInputField(
+                                controller: _controller,
+                                onSend: _sendMessage,
+                              ),
+                            ),
+                            FloatingActionButton(
+                              backgroundColor: Color(0xFF2C8955),
+                              onPressed:
+                              // If not yet listening for speech start, otherwise stop
+                              _speechToText.isNotListening ? _startListening : _stopListening,
+                              tooltip: 'Listen',
+                              child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic, color: Colors.white,),
+                            ),
+                            SizedBox(width: 16,),
+                          ],
+                        ),
+                    ),
                   ),
-                ),
               ],
         ),
       ),

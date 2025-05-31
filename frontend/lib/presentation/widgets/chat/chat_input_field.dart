@@ -6,6 +6,7 @@ class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String) onSend;
 
+
   const ChatInputField({
     required this.controller,
     required this.onSend,
@@ -53,7 +54,7 @@ class ChatInputField extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.video_camera_front_outlined, color: Color(0xFF2C8955)),
-                      onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => ChatVideoPage()),);},
+                      onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => ChatVideoPage(onSend: onSend)),);},
                     ),
                     IconButton(
                       icon: const Icon(Icons.send_rounded, color: Color(0xFF2C8955)),
